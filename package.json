@@ -1,0 +1,14 @@
+{
+  "name": "woahdice",
+  "version": "1.0.0",
+  "description": "Discord bot for simulating a Dungeons and Dragons dice set",
+  "main": "woahDice.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.1"
+  }
+}
