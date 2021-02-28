@@ -1,5 +1,5 @@
 # Dependency directories
 node_modules/
 
-# Sensitive Info ( ͡° ͜ʖ ͡°)
-sensitive.js
+# Files
+.env

@@ -1,13 +1,11 @@
 const Discord = require('discord.js');
+require('dotenv/config');
 
 const client = new Discord.Client();
 const token = process.env.TOKEN;
 
 // command we are looking for
 const commandPrefix = '!roll';
-
-// possible dice arguments
-const diceArgs = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20'];
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -17,6 +15,9 @@ client.on('message', (msg) => {
   const { content } = msg;
 
   if (content.startsWith(commandPrefix)) {
+    // if badly formatted arguments to terminate
+    let badFormatArgs = false;
+
     // separate each arg into an array
     const cmdArgs = content.split(' ');
 
@@ -32,17 +33,32 @@ client.on('message', (msg) => {
     // for multiple dice rolls commands
     const hasMultipleDice = cmdArgs.length > 1;
 
-    // variable to hold dice roll
-    let diceRoll = 0;
-
     // variable to hold the result to print
     let result = [];
 
     // parse command arguments
-    cmdArgs.forEach((cmdArg) => {
-      const res = handleDiceOption(cmdArg);
+    for (let cmdArg of cmdArgs) {
+      if (cmdArg.charAt(0) !== 'd') {
+        badFormatArgs = true;
+        break;
+      }
+
+      const rollNum = Number(cmdArg.substring(1));
+      if (!isPositiveInteger(rollNum)) {
+        badFormatArgs = true;
+        break;
+      }
+
+      const res = handleDiceRoll(rollNum);
       result.push(res);
-    });
+    }
+
+    if (badFormatArgs) {
+      msg.reply(
+        'One or more of your arguments was formatted badly. Try again.'
+      );
+      return;
+    }
 
     // correct grammars
     const replyPrefix = hasMultipleDice ? 'You rolled' : 'You rolled a';
@@ -50,7 +66,7 @@ client.on('message', (msg) => {
     // construct a nicely formatted roll result
     let nicelyFormattedResult = '';
     result.forEach((rollRes) => {
-      if (rollRes) nicelyFormattedResult += `${rollRes}, `;
+      nicelyFormattedResult += `${rollRes}, `;
     });
 
     // remove the last two chars
@@ -67,24 +83,12 @@ client.on('message', (msg) => {
 client.login(token);
 
 const handleDiceRoll = (upperBound) => {
-  return Math.floor(Math.random() * Math.floor(upperBound)) + 1;
+  return Math.floor(Math.random() * Math.floor(upperBound) + 1);
 };
 
-const handleDiceOption = (diceOption) => {
-  switch (diceOption) {
-    case 'd4':
-      return `d4: ${handleDiceRoll(4)}`;
-    case 'd6':
-      return `d6: ${handleDiceRoll(6)}`;
-    case 'd8':
-      return `d8: ${handleDiceRoll(7)}`;
-    case 'd10':
-      return `d10: ${handleDiceRoll(9)}`;
-    case 'd12':
-      return `d12: ${handleDiceRoll(11)}`;
-    case 'd20':
-      return `d20: ${handleDiceRoll(19)}`;
-    default:
-      return null;
-  }
+const isPositiveInteger = (num) => {
+  if (Number.isNaN(num)) return false; // assert number
+  if (!Number.isInteger(num)) return false; // assert integer
+  if (num < 0) return false; // assert positive or 0
+  return true;
 };
