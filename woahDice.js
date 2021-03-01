@@ -30,38 +30,50 @@ client.on('message', (msg) => {
     // ensure there are commands to parse
     if (!cmdArgs || cmdArgs.length === 0) return;
 
-    // for multiple dice rolls commands
-    const hasMultipleDice = cmdArgs.length > 1;
-
     // variable to hold the result to print
     let result = [];
 
     // parse command arguments
     for (let cmdArg of cmdArgs) {
-      if (cmdArg.charAt(0) !== 'd') {
+      if (cmdArg.indexOf('d') === -1 || cmdArg.match(/d/g).length > 1) {
         badFormatArgs = true;
         break;
       }
 
-      const rollNum = Number(cmdArg.substring(1));
-      if (!isPositiveInteger(rollNum)) {
+      let numRolls = 1;
+      const splitArgs = cmdArg.split('d');
+
+      // get number of time to roll this dice
+      if (splitArgs[0]) {
+        if (!isPositiveInteger(Number(splitArgs[0]))) {
+          badFormatArgs = true;
+          break;
+        }
+        numRolls = Number(splitArgs[0]);
+      }
+
+      // sides of this dice
+      const sideNum = Number(splitArgs[1]);
+      if (!isPositiveInteger(sideNum)) {
         badFormatArgs = true;
         break;
       }
 
-      const res = handleDiceRoll(rollNum);
-      result.push(res);
+      for (i = 0; i < numRolls; ++i) {
+        const res = handleDiceRoll(sideNum);
+        result.push(res);
+      }
     }
 
     if (badFormatArgs) {
       msg.reply(
-        'One or more of your arguments was formatted badly. Try again.'
+        'One or more of your arguments was formatted badly. Ask Mike if lost. Ex. #d#'
       );
       return;
     }
 
     // correct grammars
-    const replyPrefix = hasMultipleDice ? 'You rolled' : 'You rolled a';
+    const replyPrefix = result.length > 1 ? 'You rolled' : 'You rolled a';
 
     // construct a nicely formatted roll result
     let nicelyFormattedResult = '';
@@ -76,7 +88,9 @@ client.on('message', (msg) => {
     );
 
     // reply with result
-    msg.reply(`${replyPrefix} ${nicelyFormattedResult}`);
+    msg.reply(`${replyPrefix} ${nicelyFormattedResult}`).catch((error) => {
+      msg.reply(`Something went wrong sending to text chat: ${error.message}`);
+    });
   }
 });
 
