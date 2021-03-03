@@ -16,7 +16,12 @@ client.on('message', (msg) => {
 
   if (content.startsWith(commandPrefix)) {
     // if badly formatted arguments to terminate
-    let badFormatArgs = false;
+    let fail = false;
+    let failMsg =
+      'One or more of your arguments was formatted badly. Ask Mike if lost. Ex. #d#';
+
+    // number for preventing overloads and preventing msg errors
+    let totalRollNum = 0;
 
     // separate each arg into an array
     const cmdArgs = content.split(' ');
@@ -36,7 +41,7 @@ client.on('message', (msg) => {
     // parse command arguments
     for (let cmdArg of cmdArgs) {
       if (cmdArg.indexOf('d') === -1 || cmdArg.match(/d/g).length > 1) {
-        badFormatArgs = true;
+        fail = true;
         break;
       }
 
@@ -46,16 +51,23 @@ client.on('message', (msg) => {
       // get number of time to roll this dice
       if (splitArgs[0]) {
         if (!isPositiveInteger(Number(splitArgs[0]))) {
-          badFormatArgs = true;
+          fail = true;
           break;
         }
         numRolls = Number(splitArgs[0]);
+        totalRollNum += numRolls;
+      }
+
+      if (totalRollNum > 1000) {
+        fail = true;
+        failMsg = 'Too many rolls. Calm down.';
+        break;
       }
 
       // sides of this dice
       const sideNum = Number(splitArgs[1]);
       if (!isPositiveInteger(sideNum)) {
-        badFormatArgs = true;
+        fail = true;
         break;
       }
 
@@ -65,10 +77,8 @@ client.on('message', (msg) => {
       }
     }
 
-    if (badFormatArgs) {
-      msg.reply(
-        'One or more of your arguments was formatted badly. Ask Mike if lost. Ex. #d#'
-      );
+    if (fail) {
+      msg.reply(failMsg);
       return;
     }
 
